@@ -11,25 +11,45 @@
  * Created on 10 de Dezembro de 2016, 20:47
  */
 
-#include <cstdlib>
+#include "decoder.h"
 #include "ledstrip.h"
-#include <unistd.h>
 
-using namespace std;
 
-/*
- * 
- */
+
+void frame_callback(uint8_t *data[4], AVPacket* pkt) ;
+void endVideo_callback();
+
+//GPIO18, 144 leds ledstrip
+Ledstrip leds(18, 144);
+
+//constructor with callbak when decode frame and another callbak when Media ends
+Decoder decoder(frame_callback, endVideo_callback);
+
+
+//callback from frame, here we extract the rgb color to put in the leds
+void frame_callback(uint8_t *data[4], AVPacket* pkt) {
+	//get the RGB color of each pixel on the first row of frame and set the led with respective colors
+	for (int i = 0; i < leds.getCount(); i++) {
+		int p = i * 3;
+		leds.setLed(i, (int) data[0][p], (int) data[0][p + 1], (int) data[0][p + 2]);
+	}
+	//turn leds on
+	leds.on();
+}
+
+//callback when Media ends
+void endVideo_callback() {
+	//start playing another video
+	decoder.play("video2.mp4");
+	//you can play also images
+	//decoder.play("image.png");
+
+}
+
 int main(int argc, char** argv) {
-	Ledstrip leds(18);
-//	leds.loop(true);
-	leds.setBrightness(90);
-//	leds.play(argv[1]);
-	leds.play( "/root/.netbeans/remote/192.168.1.104/pedro-vaio-Windows-x86_64/C/Users/Pedro/Documents/NetBeansProjects/H264Decoder/dist/Debug/GNU-Linux/t.h264");
-	sleep(3);
-	leds.play( "/root/.netbeans/remote/192.168.1.104/pedro-vaio-Windows-x86_64/C/Users/Pedro/Documents/NetBeansProjects/H264Decoder/dist/Debug/GNU-Linux/in.h264");
-	
-	
+	//start playing video
+	decoder.play("video1.mp4");
 	return 0;
 }
+
 
